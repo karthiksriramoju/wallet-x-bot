@@ -56,7 +56,7 @@ interface WalletResponse {
 }
 
 interface BalanceResponse {
-    balance: number;
+    balanceInSol: number;
 }
 
 interface TransferResponse {
@@ -191,6 +191,7 @@ class SolanaWalletTelegramBot {
                 password: state.password!,
                 API_TOKEN,
             };
+            console.log(signupPayload)
             const response = await axios.post<WalletResponse>(
                 `http://${this.serverUrl}/api/signup`,
                 signupPayload
@@ -248,8 +249,16 @@ class SolanaWalletTelegramBot {
 
             if (response.status === 200) {
                 // Assuming balance is returned in lamports (1 SOL = 1_000_000_000 lamports)
-                const solBalance = response.data.balance / 1_000_000_000;
+
+                console.log(response.data);
+                const solBalance = response.data.balanceInSol ;
+                console.log(solBalance);
+                if (solBalance == 0) {
+                    await this.bot.sendMessage(msg.chat.id, "You have 0 SOL in your account. Please deposit some SOL to continue.");
+                }
+                else{
                 await this.bot.sendMessage(msg.chat.id, `💰 Balance: ${solBalance} SOL`);
+                }
             }
         } catch (error: any) {
             await this.handleServerError(msg, error.response?.data || error);

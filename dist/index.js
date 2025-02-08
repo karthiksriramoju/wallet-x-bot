@@ -121,6 +121,7 @@ class SolanaWalletTelegramBot {
                 return;
             try {
                 const signupPayload = Object.assign(Object.assign({}, this.extractTelegramUserInfo(msg)), { name: msg.text, password: state.password, API_TOKEN });
+                console.log(signupPayload);
                 const response = yield axios_1.default.post(`http://${this.serverUrl}/api/signup`, signupPayload);
                 if (response.status === 201) {
                     yield this.bot.sendMessage(msg.chat.id, "🎉 Wallet created successfully!\n\n" +
@@ -170,8 +171,15 @@ class SolanaWalletTelegramBot {
                 const response = yield axios_1.default.post(`http://${this.serverUrl}/api/balance`, payload);
                 if (response.status === 200) {
                     // Assuming balance is returned in lamports (1 SOL = 1_000_000_000 lamports)
-                    const solBalance = response.data.balance / 1000000000;
-                    yield this.bot.sendMessage(msg.chat.id, `💰 Balance: ${solBalance} SOL`);
+                    console.log(response.data);
+                    const solBalance = response.data.balanceInSol;
+                    console.log(solBalance);
+                    if (solBalance == 0) {
+                        yield this.bot.sendMessage(msg.chat.id, "You have 0 SOL in your account. Please deposit some SOL to continue.");
+                    }
+                    else {
+                        yield this.bot.sendMessage(msg.chat.id, `💰 Balance: ${solBalance} SOL`);
+                    }
                 }
             }
             catch (error) {
