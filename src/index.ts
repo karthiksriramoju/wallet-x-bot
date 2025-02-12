@@ -39,6 +39,19 @@ interface BalancePayload {
     walletName: string;
     API_TOKEN: string;
 }
+interface TransactionsPayload {
+    telegramId: string;
+    password: string;
+    walletName: string;
+    API_TOKEN: string;
+}
+interface AirdropPayload {
+    telegramId: string;
+    password: string;
+    walletName: string;
+    amount: number;
+    API_TOKEN: string;
+}
 
 interface TransferPayload {
     telegramId: string;
@@ -55,12 +68,21 @@ interface WalletResponse {
     privateKey?: string;
 }
 
+interface AirdropResponse {
+    publicKey: string;
+    signature: string;
+}
+
 interface BalanceResponse {
     balanceInSol: number;
 }
 
 interface TransferResponse {
     signature: string;
+}
+
+interface TransactionResponse {
+    transactions: [];
 }
 
 // Constants
@@ -74,6 +96,7 @@ const commands: Command[] = [
     { command: "balance", description: "Check wallet balance." },
     { command: "transfer", description: "Transfer SOL to another wallet." },
     { command: "switchnetwork", description: "Switch Solana networks." },
+    { command: "requestairdrop", description: "Request SOL airdrop." },
 ];
 
 type ConversationState = {
@@ -85,6 +108,7 @@ type ConversationState = {
     amount?: number;
     network?: string;
     rpcUrl?: string;
+    airdropAmount?: number; 
 };
 
 // Bot Class
@@ -150,6 +174,8 @@ class SolanaWalletTelegramBot {
                 "1️⃣ /signup - Register your telegram account\n" +
                 "💰 /balance - Check your wallet balance\n" +
                 "💸 /transfer - Send SOL to another wallet\n" +
+                "💰 /requestairdrop - Airdrop SOL to Your wallet\n" +
+                "🌐 /getTransactions - Get Recent Transactions of your Wallet\n" +
                 "🌐 /switchnetwork - Switch between Solana networks\n\n" +
                 "🔹 Available Networks:\n" +
                 "   - mainnet-beta\n" +
@@ -244,6 +270,124 @@ class SolanaWalletTelegramBot {
         try {
             const response = await axios.post<BalanceResponse>(
                 `http://${this.serverUrl}/api/balance`,
+                payload
+            );
+
+            if (response.status === 200) {
+                // Assuming balance is returned in lamports (1 SOL = 1_000_000_000 lamports)
+
+                console.log(response.data);
+                const solBalance = response.data.balanceInSol ;
+                console.log(solBalance);
+                if (solBalance == 0) {
+                    await this.bot.sendMessage(msg.chat.id, "You have 0 SOL in your account. Please deposit some SOL to continue.");
+                }
+                else{
+                await this.bot.sendMessage(msg.chat.id, `💰 Balance: ${solBalance} SOL`);
+                }
+            }
+        } catch (error: any) {
+            await this.handleServerError(msg, error.response?.data || error);
+        }
+        this.conversationStates.delete(msg.chat.id);
+    }
+
+        // **************** Request Airdrop Flow ****************
+
+    private async handleRequestAirdrop(msg: TelegramBot.Message): Promise<void> {
+        this.conversationStates.set(msg.chat.id, { state: 'AWAITING_WALLET_FOR_AIRDROP' });
+        await this.bot.sendMessage(msg.chat.id, "🏦 Enter the wallet name to receive the airdrop:");
+    }
+
+    private async processAirdropWallet(msg: TelegramBot.Message): Promise<void> {
+        const state = this.conversationStates.get(msg.chat.id);
+        if (!state || !msg.text) return;
+    
+        state.walletName = msg.text;
+        state.state = 'AWAITING_AIRDROP_AMOUNT';
+        this.conversationStates.set(msg.chat.id, state);
+        await this.bot.sendMessage(msg.chat.id, "💰 Enter the amount of SOL to airdrop:");
+    }
+    
+    private async processAirdropAmount(msg: TelegramBot.Message): Promise<void> {
+        const state = this.conversationStates.get(msg.chat.id);
+        if (!state || !msg.text) return;
+    
+        const amount = parseFloat(msg.text);
+        if (isNaN(amount)) {
+            await this.bot.sendMessage(msg.chat.id, "❌ Invalid amount. Please enter a valid number:");
+            return;
+        }
+    
+        state.airdropAmount = amount;
+        state.state = 'AWAITING_PASSWORD_FOR_AIRDROP';
+        this.conversationStates.set(msg.chat.id, state);
+        await this.bot.sendMessage(msg.chat.id, "🔑 Enter your password:");
+    }
+    
+    private async processAirdrop(msg: TelegramBot.Message): Promise<void> {
+        const state = this.conversationStates.get(msg.chat.id);
+        if (!state || !msg.text) return;
+    
+        const payload : AirdropPayload = {
+            telegramId: msg.from!.id.toString(),
+            password: msg.text,
+            walletName: state.walletName!,
+            amount: state.airdropAmount!,
+            API_TOKEN,
+        };
+    
+        try {
+            const response = await axios.post<AirdropResponse>(
+                `http://${this.serverUrl}/api/airdrop`,
+                payload
+            );
+            if (response.status === 200) {
+                await this.bot.sendMessage(
+                    msg.chat.id,
+                    `✅ Airdrop of ${state.airdropAmount} SOL successful!`
+                );
+            }
+        } catch (error: any) {
+            console.log(error.response?.data || error);
+            await this.handleServerError(msg, error.response?.data || error);
+        }
+        this.conversationStates.delete(msg.chat.id);
+    }
+
+    // **************** Get Transaction Flow ****************
+
+    private async handleTransactions(msg: TelegramBot.Message): Promise<void> {
+        // Begin balance conversation by asking wallet name
+        this.conversationStates.set(msg.chat.id, { state: 'AWAITING_WALLET_NAME_FOR_BALANCE' });
+        await this.bot.sendMessage(msg.chat.id, "🏦 Enter the wallet name to get Recent Transactions:");
+    }
+
+    private async processTransactionsWalletName(msg: TelegramBot.Message): Promise<void> {
+        const state = this.conversationStates.get(msg.chat.id);
+        if (!state || !msg.text) return;
+
+        state.walletName = msg.text;
+        state.state = 'AWAITING_PASSWORD_FOR_BALANCE';
+        this.conversationStates.set(msg.chat.id, state);
+
+        await this.bot.sendMessage(msg.chat.id, "🔑 Enter your password:");
+    }
+
+    private async processTransactions(msg: TelegramBot.Message): Promise<void> {
+        const state = this.conversationStates.get(msg.chat.id);
+        if (!state || !msg.text) return;
+
+        const payload: BalancePayload = {
+            telegramId: msg.from!.id.toString(),
+            password: msg.text,
+            walletName: state.walletName!,
+            API_TOKEN,
+        };
+
+        try {
+            const response = await axios.post<BalanceResponse>(
+                `http://${this.serverUrl}/api/transactions`,
                 payload
             );
 
@@ -420,6 +564,8 @@ class SolanaWalletTelegramBot {
         this.bot.onText(/\/balance/, this.handleBalance.bind(this));
         this.bot.onText(/\/switchnetwork/, this.handleNetworkSwitch.bind(this));
         this.bot.onText(/\/transfer/, this.handleTransfer.bind(this));
+        this.bot.onText(/\/requestairdrop/, this.handleRequestAirdrop.bind(this));
+
 
         // Message handler for conversation flow.
         this.bot.on('message', async (msg: TelegramBot.Message) => {
@@ -470,6 +616,17 @@ class SolanaWalletTelegramBot {
                 case 'AWAITING_PASSWORD_FOR_TRANSFER':
                     await this.processTransfer(msg);
                     break;
+
+                // Airdrop flow
+                    case 'AWAITING_WALLET_FOR_AIRDROP':
+                        await this.processAirdropWallet(msg);
+                        break;
+                    case 'AWAITING_AIRDROP_AMOUNT':
+                        await this.processAirdropAmount(msg);
+                        break;
+                    case 'AWAITING_PASSWORD_FOR_AIRDROP':
+                        await this.processAirdrop(msg);
+                        break;                    
 
                 default:
                     break;

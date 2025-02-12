@@ -27,6 +27,7 @@ const commands = [
     { command: "balance", description: "Check wallet balance." },
     { command: "transfer", description: "Transfer SOL to another wallet." },
     { command: "switchnetwork", description: "Switch Solana networks." },
+    { command: "requestairdrop", description: "Request SOL airdrop." },
 ];
 // Bot Class
 class SolanaWalletTelegramBot {
@@ -86,6 +87,8 @@ class SolanaWalletTelegramBot {
                 "1️⃣ /signup - Register your telegram account\n" +
                 "💰 /balance - Check your wallet balance\n" +
                 "💸 /transfer - Send SOL to another wallet\n" +
+                "💰 /requestairdrop - Airdrop SOL to Your wallet\n" +
+                "🌐 /getTransactions - Get Recent Transactions of your Wallet\n" +
                 "🌐 /switchnetwork - Switch between Solana networks\n\n" +
                 "🔹 Available Networks:\n" +
                 "   - mainnet-beta\n" +
@@ -169,6 +172,118 @@ class SolanaWalletTelegramBot {
             };
             try {
                 const response = yield axios_1.default.post(`http://${this.serverUrl}/api/balance`, payload);
+                if (response.status === 200) {
+                    // Assuming balance is returned in lamports (1 SOL = 1_000_000_000 lamports)
+                    console.log(response.data);
+                    const solBalance = response.data.balanceInSol;
+                    console.log(solBalance);
+                    if (solBalance == 0) {
+                        yield this.bot.sendMessage(msg.chat.id, "You have 0 SOL in your account. Please deposit some SOL to continue.");
+                    }
+                    else {
+                        yield this.bot.sendMessage(msg.chat.id, `💰 Balance: ${solBalance} SOL`);
+                    }
+                }
+            }
+            catch (error) {
+                yield this.handleServerError(msg, ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error);
+            }
+            this.conversationStates.delete(msg.chat.id);
+        });
+    }
+    // **************** Request Airdrop Flow ****************
+    handleRequestAirdrop(msg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.conversationStates.set(msg.chat.id, { state: 'AWAITING_WALLET_FOR_AIRDROP' });
+            yield this.bot.sendMessage(msg.chat.id, "🏦 Enter the wallet name to receive the airdrop:");
+        });
+    }
+    processAirdropWallet(msg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const state = this.conversationStates.get(msg.chat.id);
+            if (!state || !msg.text)
+                return;
+            state.walletName = msg.text;
+            state.state = 'AWAITING_AIRDROP_AMOUNT';
+            this.conversationStates.set(msg.chat.id, state);
+            yield this.bot.sendMessage(msg.chat.id, "💰 Enter the amount of SOL to airdrop:");
+        });
+    }
+    processAirdropAmount(msg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const state = this.conversationStates.get(msg.chat.id);
+            if (!state || !msg.text)
+                return;
+            const amount = parseFloat(msg.text);
+            if (isNaN(amount)) {
+                yield this.bot.sendMessage(msg.chat.id, "❌ Invalid amount. Please enter a valid number:");
+                return;
+            }
+            state.airdropAmount = amount;
+            state.state = 'AWAITING_PASSWORD_FOR_AIRDROP';
+            this.conversationStates.set(msg.chat.id, state);
+            yield this.bot.sendMessage(msg.chat.id, "🔑 Enter your password:");
+        });
+    }
+    processAirdrop(msg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
+            const state = this.conversationStates.get(msg.chat.id);
+            if (!state || !msg.text)
+                return;
+            const payload = {
+                telegramId: msg.from.id.toString(),
+                password: msg.text,
+                walletName: state.walletName,
+                amount: state.airdropAmount,
+                API_TOKEN,
+            };
+            try {
+                const response = yield axios_1.default.post(`http://${this.serverUrl}/api/airdrop`, payload);
+                if (response.status === 200) {
+                    yield this.bot.sendMessage(msg.chat.id, `✅ Airdrop of ${state.airdropAmount} SOL successful!`);
+                }
+            }
+            catch (error) {
+                console.log(((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error);
+                yield this.handleServerError(msg, ((_b = error.response) === null || _b === void 0 ? void 0 : _b.data) || error);
+            }
+            this.conversationStates.delete(msg.chat.id);
+        });
+    }
+    // **************** Get Transaction Flow ****************
+    handleTransactions(msg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Begin balance conversation by asking wallet name
+            this.conversationStates.set(msg.chat.id, { state: 'AWAITING_WALLET_NAME_FOR_BALANCE' });
+            yield this.bot.sendMessage(msg.chat.id, "🏦 Enter the wallet name to get Recent Transactions:");
+        });
+    }
+    processTransactionsWalletName(msg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const state = this.conversationStates.get(msg.chat.id);
+            if (!state || !msg.text)
+                return;
+            state.walletName = msg.text;
+            state.state = 'AWAITING_PASSWORD_FOR_BALANCE';
+            this.conversationStates.set(msg.chat.id, state);
+            yield this.bot.sendMessage(msg.chat.id, "🔑 Enter your password:");
+        });
+    }
+    processTransactions(msg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            const state = this.conversationStates.get(msg.chat.id);
+            if (!state || !msg.text)
+                return;
+            const payload = {
+                telegramId: msg.from.id.toString(),
+                password: msg.text,
+                walletName: state.walletName,
+                API_TOKEN,
+            };
+            try {
+                const response = yield axios_1.default.post(`http://${this.serverUrl}/api/transactions`, payload);
                 if (response.status === 200) {
                     // Assuming balance is returned in lamports (1 SOL = 1_000_000_000 lamports)
                     console.log(response.data);
@@ -328,6 +443,7 @@ class SolanaWalletTelegramBot {
         this.bot.onText(/\/balance/, this.handleBalance.bind(this));
         this.bot.onText(/\/switchnetwork/, this.handleNetworkSwitch.bind(this));
         this.bot.onText(/\/transfer/, this.handleTransfer.bind(this));
+        this.bot.onText(/\/requestairdrop/, this.handleRequestAirdrop.bind(this));
         // Message handler for conversation flow.
         this.bot.on('message', (msg) => __awaiter(this, void 0, void 0, function* () {
             var _a;
@@ -374,6 +490,16 @@ class SolanaWalletTelegramBot {
                     break;
                 case 'AWAITING_PASSWORD_FOR_TRANSFER':
                     yield this.processTransfer(msg);
+                    break;
+                // Airdrop flow
+                case 'AWAITING_WALLET_FOR_AIRDROP':
+                    yield this.processAirdropWallet(msg);
+                    break;
+                case 'AWAITING_AIRDROP_AMOUNT':
+                    yield this.processAirdropAmount(msg);
+                    break;
+                case 'AWAITING_PASSWORD_FOR_AIRDROP':
+                    yield this.processAirdrop(msg);
                     break;
                 default:
                     break;
