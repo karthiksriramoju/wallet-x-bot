@@ -81,9 +81,14 @@ interface TransferResponse {
     signature: string;
 }
 
-interface TransactionResponse {
-    transactions: [];
-}
+type TransactionResponse = {
+    blockTime: number; // Unix timestamp of when the transaction was confirmed
+    confirmationStatus: 'processed' | 'confirmed' | 'finalized'; // Transaction status
+    err: null | string; // Error message (null if no error)
+    memo: null | string; // Optional memo field
+    signature: string; // Unique transaction identifier
+    slot: number; // Slot number where the transaction was confirmed
+  };
 
 // Constants
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN!;
@@ -97,6 +102,7 @@ const commands: Command[] = [
     { command: "transfer", description: "Transfer SOL to another wallet." },
     { command: "switchnetwork", description: "Switch Solana networks." },
     { command: "requestairdrop", description: "Request SOL airdrop." },
+    { command: "getTransactions", description: "Get Recent Transactions." },
 ];
 
 type ConversationState = {
@@ -177,7 +183,7 @@ class SolanaWalletTelegramBot {
                 "💰 /requestairdrop - Airdrop SOL to Your wallet\n" +
                 "🌐 /getTransactions - Get Recent Transactions of your Wallet\n" +
                 "🌐 /switchnetwork - Switch between Solana networks\n\n" +
-                "🔹 Available Networks:\n" +
+                " Available Networks:\n" +
                 "   - mainnet-beta\n" +
                 "   - testnet\n" +
                 "   - devnet\n" +
@@ -227,8 +233,7 @@ class SolanaWalletTelegramBot {
                 await this.bot.sendMessage(
                     msg.chat.id,
                     "🎉 Wallet created successfully!\n\n" +
-                        "🔑 Your wallet details have been generated securely. " +
-                        "Please keep your mnemonic and private key safe.\n\n" +
+                        "🔑 Your wallet details have been generated securely.\n\n" +
                         `🔐 Public Key: ${response.data.publicKey}`
                 );
             }
@@ -359,7 +364,7 @@ class SolanaWalletTelegramBot {
 
     private async handleTransactions(msg: TelegramBot.Message): Promise<void> {
         // Begin balance conversation by asking wallet name
-        this.conversationStates.set(msg.chat.id, { state: 'AWAITING_WALLET_NAME_FOR_BALANCE' });
+        this.conversationStates.set(msg.chat.id, { state: 'AWAITING_WALLET_NAME_FOR_TRANSACTIONS' });
         await this.bot.sendMessage(msg.chat.id, "🏦 Enter the wallet name to get Recent Transactions:");
     }
 
@@ -368,7 +373,7 @@ class SolanaWalletTelegramBot {
         if (!state || !msg.text) return;
 
         state.walletName = msg.text;
-        state.state = 'AWAITING_PASSWORD_FOR_BALANCE';
+        state.state = 'AWAITING_PASSWORD_FOR_TRANSACTIONS';
         this.conversationStates.set(msg.chat.id, state);
 
         await this.bot.sendMessage(msg.chat.id, "🔑 Enter your password:");
@@ -378,7 +383,7 @@ class SolanaWalletTelegramBot {
         const state = this.conversationStates.get(msg.chat.id);
         if (!state || !msg.text) return;
 
-        const payload: BalancePayload = {
+        const payload: TransactionsPayload = {
             telegramId: msg.from!.id.toString(),
             password: msg.text,
             walletName: state.walletName!,
@@ -386,23 +391,35 @@ class SolanaWalletTelegramBot {
         };
 
         try {
-            const response = await axios.post<BalanceResponse>(
+            const response = await axios.post(
                 `http://${this.serverUrl}/api/transactions`,
                 payload
             );
 
             if (response.status === 200) {
-                // Assuming balance is returned in lamports (1 SOL = 1_000_000_000 lamports)
+                const transactions : TransactionResponse[] = response.data.transactions ;
+                if (transactions.length === 0) {
+                    await this.bot.sendMessage(msg.chat.id, "You haven't made any transactions yet.");
+                } else {
+                    // Format transactions
+                    let formattedTransactions = transactions.map((transaction, index) => {
+                        const blockTime = new Date(transaction.blockTime * 1000).toLocaleString(); // Convert blockTime to readable format
+                        return `
+                📌 Transaction ${index + 1}
+                ⏰ Block Time: ${blockTime}
+                ✅ Confirmation: ${transaction.confirmationStatus}
+                🔐 Signature: ${transaction.signature}
+                        `;
+                    }).join('\n');
+                
+                    // Send the formatted message
+                    await this.bot.sendMessage(
+                        msg.chat.id,
+                        `📜 **Your Transactions:**\n${formattedTransactions}`,
+                        { parse_mode: 'Markdown' } // Enable Markdown formatting
+                    );
+                }
 
-                console.log(response.data);
-                const solBalance = response.data.balanceInSol ;
-                console.log(solBalance);
-                if (solBalance == 0) {
-                    await this.bot.sendMessage(msg.chat.id, "You have 0 SOL in your account. Please deposit some SOL to continue.");
-                }
-                else{
-                await this.bot.sendMessage(msg.chat.id, `💰 Balance: ${solBalance} SOL`);
-                }
             }
         } catch (error: any) {
             await this.handleServerError(msg, error.response?.data || error);
@@ -416,7 +433,7 @@ class SolanaWalletTelegramBot {
         this.conversationStates.set(msg.chat.id, { state: 'AWAITING_NETWORK_SELECTION' });
         await this.bot.sendMessage(
             msg.chat.id,
-            "🌐 Select a Solana network (mainnet-beta, testnet, devnet, custom):"
+            "🌐 Select a Solana network [Type](mainnet-beta, testnet, devnet, custom):"
         );
     }
 
@@ -565,6 +582,7 @@ class SolanaWalletTelegramBot {
         this.bot.onText(/\/switchnetwork/, this.handleNetworkSwitch.bind(this));
         this.bot.onText(/\/transfer/, this.handleTransfer.bind(this));
         this.bot.onText(/\/requestairdrop/, this.handleRequestAirdrop.bind(this));
+        this.bot.onText(/\/getTransactions/, this.handleTransactions.bind(this));
 
 
         // Message handler for conversation flow.
@@ -626,7 +644,15 @@ class SolanaWalletTelegramBot {
                         break;
                     case 'AWAITING_PASSWORD_FOR_AIRDROP':
                         await this.processAirdrop(msg);
-                        break;                    
+                        break;       
+                        
+                // Transaction flow
+                case 'AWAITING_WALLET_NAME_FOR_TRANSACTIONS':
+                    await this.processTransactionsWalletName(msg);
+                    break;
+                case 'AWAITING_PASSWORD_FOR_TRANSACTIONS':
+                    await this.processTransactions(msg);
+                    break;                        
 
                 default:
                     break;
