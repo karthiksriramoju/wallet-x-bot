@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import TelegramBot from 'node-telegram-bot-api';
 import axios from 'axios';
-import express from express;
+import express from "express";
 
 // Load environment variables
 config();

@@ -21,6 +21,7 @@
     "winston": "^3.17.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.0",
     "@types/node": "^22.13.1",
     "@types/node-telegram-bot-api": "^0.64.7"
   }
