@@ -3,6 +3,16 @@ import TelegramBot from 'node-telegram-bot-api';
 import axios from 'axios';
 import express from "express";
 
+
+
+
+const app = express();
+app.get("/", (req:any, res:any) => res.send("Bot is running"));
+
+// Render needs a listening port
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
 // Load environment variables
 config();
 
@@ -675,9 +685,3 @@ if (require.main === module) {
 
 export default SolanaWalletTelegramBot;
 
-const app = express();
-app.get("/", (req:any, res:any) => res.send("Bot is running"));
-
-// Render needs a listening port
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

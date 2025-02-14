@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = require("dotenv");
 const node_telegram_bot_api_1 = __importDefault(require("node-telegram-bot-api"));
 const axios_1 = __importDefault(require("axios"));
+const express_1 = __importDefault(require("express"));
 // Load environment variables
 (0, dotenv_1.config)();
 // Constants
@@ -533,3 +534,8 @@ if (require.main === module) {
     main();
 }
 exports.default = SolanaWalletTelegramBot;
+const app = (0, express_1.default)();
+app.get("/", (req, res) => res.send("Bot is running"));
+// Render needs a listening port
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
