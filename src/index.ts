@@ -176,19 +176,17 @@ class SolanaWalletTelegramBot {
         await this.bot.sendMessage(
             msg.chat.id,
             "🚀 **Welcome to the Solana Wallet Bot!**\n\n" +
-                "Here's how you can get started:\n\n" +
-                "1️⃣ /signup - Register your telegram account\n" +
-                "💰 /balance - Check your wallet balance\n" +
-                "💸 /transfer - Send SOL to another wallet\n" +
-                "💰 /requestairdrop - Airdrop SOL to Your wallet\n" +
-                "🌐 /getTransactions - Get Recent Transactions of your Wallet\n" +
-                "🌐 /switchnetwork - Switch between Solana networks\n\n" +
-                " Available Networks:\n" +
-                "   - mainnet-beta\n" +
-                "   - testnet\n" +
-                "   - devnet\n" +
-                "   - custom (connect to Solana using your own RPC URL)\n\n" +
-                "🔄 Use /help anytime to view this message again!"
+"Your gateway to managing Solana wallets seamlessly on Telegram!\n" +
+"Here’s how you can get started:\n\n" +
+"1️⃣ /signup - Register your Telegram account and create your wallet\n" +
+"💰 /balance - Check your wallet balance in SOL\n" +
+"💸 /transfer - Send SOL to another wallet securely\n" +
+"🎁 /requestairdrop - Request an airdrop of SOL to your wallet\n" +
+"📜 /getTransactions - View your recent transactions\n" +
+"🌐 /switchnetwork - Switch between Solana networks\n\n" +
+
+"Switch to Devnet using /switchnetwork to test out the bot\n\n"+
+"🔄 Use /help anytime to view this message again!"
         );
     }
 
@@ -433,7 +431,11 @@ class SolanaWalletTelegramBot {
         this.conversationStates.set(msg.chat.id, { state: 'AWAITING_NETWORK_SELECTION' });
         await this.bot.sendMessage(
             msg.chat.id,
-            "🌐 Select a Solana network [Type](mainnet-beta, testnet, devnet, custom):"
+                " Available Networks:\n" +
+                "   - mainnet-beta\n" +
+                "   - testnet\n" +
+                "   - devnet\n" +
+                "   - custom (connect to Solana using your own RPC URL)\n"+"\n" +"🌐 Type a Solana network:"
         );
     }
 

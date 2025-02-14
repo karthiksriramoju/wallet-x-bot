@@ -84,18 +84,15 @@ class SolanaWalletTelegramBot {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.setCommands();
             yield this.bot.sendMessage(msg.chat.id, "🚀 **Welcome to the Solana Wallet Bot!**\n\n" +
-                "Here's how you can get started:\n\n" +
-                "1️⃣ /signup - Register your telegram account\n" +
-                "💰 /balance - Check your wallet balance\n" +
-                "💸 /transfer - Send SOL to another wallet\n" +
-                "💰 /requestairdrop - Airdrop SOL to Your wallet\n" +
-                "🌐 /getTransactions - Get Recent Transactions of your Wallet\n" +
+                "Your gateway to managing Solana wallets seamlessly on Telegram!\n" +
+                "Here’s how you can get started:\n\n" +
+                "1️⃣ /signup - Register your Telegram account and create your wallet\n" +
+                "💰 /balance - Check your wallet balance in SOL\n" +
+                "💸 /transfer - Send SOL to another wallet securely\n" +
+                "🎁 /requestairdrop - Request an airdrop of SOL to your wallet\n" +
+                "📜 /getTransactions - View your recent transactions\n" +
                 "🌐 /switchnetwork - Switch between Solana networks\n\n" +
-                " Available Networks:\n" +
-                "   - mainnet-beta\n" +
-                "   - testnet\n" +
-                "   - devnet\n" +
-                "   - custom (connect to Solana using your own RPC URL)\n\n" +
+                "Switch to Devnet using /switchnetwork to test out the bot\n\n" +
                 "🔄 Use /help anytime to view this message again!");
         });
     }
@@ -317,7 +314,11 @@ class SolanaWalletTelegramBot {
         return __awaiter(this, void 0, void 0, function* () {
             // Begin network switch conversation
             this.conversationStates.set(msg.chat.id, { state: 'AWAITING_NETWORK_SELECTION' });
-            yield this.bot.sendMessage(msg.chat.id, "🌐 Select a Solana network [Type](mainnet-beta, testnet, devnet, custom):");
+            yield this.bot.sendMessage(msg.chat.id, " Available Networks:\n" +
+                "   - mainnet-beta\n" +
+                "   - testnet\n" +
+                "   - devnet\n" +
+                "   - custom (connect to Solana using your own RPC URL)\n" + "\n" + "🌐 Type a Solana network:");
         });
     }
     processNetworkSelection(msg) {
