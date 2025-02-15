@@ -48,8 +48,8 @@ Ensure you have the following installed:
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/solana-telegram-bot.git
-   cd solana-telegram-bot
+   git clone https://github.com/karthiksriramoju/wallet-x-bot.git
+   cd wallet-x-bot
    ```
 2. Install dependencies:
    ```bash
@@ -59,20 +59,15 @@ Ensure you have the following installed:
 ### Environment Setup
 Create a `.env` file in the root directory and configure the following:
 ```env
-TELEGRAM_TOKEN=8069832050:AAE108FADSgyf2sNypnE7rjfwmncf8RzqGk
-API_BASE_URL=wallet-x-api.onrender.com
-API_TOKEN=UVlJuFAvDcXAndu
-PORT=4000
+TELEGRAM_TOKEN=your_telegram_bots_token
+API_BASE_URL= backend_api_url
+API_TOKEN= your_key_to_authorize_requests_same_as_api's_key
 ```
 
 ### Running the Bot
 #### Development Mode
 ```bash
 npm run dev
-```
-#### Production Mode
-```bash
-npm run build && npm start
 ```
 
 ## How It Works
