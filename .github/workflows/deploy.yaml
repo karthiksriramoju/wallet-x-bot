@@ -32,11 +32,11 @@ jobs:
     - name: 🚀 Deploy Bot to Droplet
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ secrets.SSH_HOST_BACKEND }}
+        host: ${{ secrets.SSH_HOST_IP }}
         username: root
         key: ${{ secrets.SSH_KEY }}
         script: |
-        
+
           docker pull karthik1417/walletx-bot:latest
           docker stop walletx-bot || true
           docker rm walletx-bot || true

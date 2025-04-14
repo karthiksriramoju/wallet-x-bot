@@ -7,9 +7,8 @@ COPY package.json package-lock.json tsconfig.json ./
 # Copy source files
 COPY . .
 # Install dependencies
-RUN npm install
+RUN npm install --ignore-scripts
 
-# Can you filter the build down to just one app?
 RUN npm run build
 
 CMD ["npm", "run", "start"]
