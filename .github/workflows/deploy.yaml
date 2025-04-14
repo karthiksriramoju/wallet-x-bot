@@ -37,9 +37,7 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         script: |
 
-          docker pull karthik1417/walletx-bot:latest
-          docker stop walletx-bot || true
-          docker rm walletx-bot || true
-          docker run -d --restart always --name walletx-bot 
-          -e TELEGRAM_TOKEN="${{ secrets.TELEGRAM_TOKEN }}" -e API_TOKEN="${{ secrets.API_TOKEN }}" -e API_BASE_URL="${{ secrets.API_BASE_URL }}" 
-          karthik1417/walletx-bot:latest
+            docker pull karthik1417/walletx-bot:latest
+            docker stop walletx-bot || true
+            docker rm walletx-bot || true
+            docker run -d --restart always --name walletx-bot -e TELEGRAM_TOKEN="${{ secrets.TELEGRAM_TOKEN }}" -e API_TOKEN="${{ secrets.API_TOKEN }}" -e API_BASE_URL="${{ secrets.API_BASE_URL }}" karthik1417/walletx-bot:latest
