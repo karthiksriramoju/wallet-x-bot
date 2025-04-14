@@ -143,7 +143,7 @@ class SolanaWalletTelegramBot {
     }
 
     private async handleServerError(msg: TelegramBot.Message, error: any): Promise<void> {
-        const errorMessage = error.error || 'Unknown Error';
+        const errorMessage = error.error || ' Error. Check credentials and Please Try Again';
         const details = error.details || '';
 
         const finalError =
@@ -185,7 +185,7 @@ class SolanaWalletTelegramBot {
 "📜 /getTransactions - View your recent transactions\n" +
 "🌐 /switchnetwork - Switch between Solana networks\n\n" +
 
-"Switch to Devnet using /switchnetwork to test out the bot\n\n"+
+"Switch to Devnet after Signup using /switchnetwork to test out the bot\n\n"+
 "🔄 Use /help anytime to view this message again!"
         );
     }
@@ -223,7 +223,7 @@ class SolanaWalletTelegramBot {
             };
             console.log(signupPayload)
             const response = await axios.post<WalletResponse>(
-                `http://${this.serverUrl}/api/signup`,
+                `https://${this.serverUrl}/api/signup`,
                 signupPayload
             );
 
@@ -272,7 +272,7 @@ class SolanaWalletTelegramBot {
 
         try {
             const response = await axios.post<BalanceResponse>(
-                `http://${this.serverUrl}/api/balance`,
+                `https://${this.serverUrl}/api/balance`,
                 payload
             );
 
@@ -342,7 +342,7 @@ class SolanaWalletTelegramBot {
     
         try {
             const response = await axios.post<AirdropResponse>(
-                `http://${this.serverUrl}/api/airdrop`,
+                `https://${this.serverUrl}/api/airdrop`,
                 payload
             );
             if (response.status === 200) {
@@ -390,7 +390,7 @@ class SolanaWalletTelegramBot {
 
         try {
             const response = await axios.post(
-                `http://${this.serverUrl}/api/transactions`,
+                `https://${this.serverUrl}/api/transactions`,
                 payload
             );
 
@@ -489,7 +489,7 @@ class SolanaWalletTelegramBot {
 
         try {
             const response = await axios.post(
-                `http://${this.serverUrl}/api/network/switch`,
+                `https://${this.serverUrl}/api/network/switch`,
                 payload
             );
             if (response.status === 200) {
@@ -560,7 +560,7 @@ class SolanaWalletTelegramBot {
 
         try {
             const response = await axios.post<TransferResponse>(
-                `http://${this.serverUrl}/api/transfer`,
+                `https://${this.serverUrl}/api/transfer`,
                 payload
             );
             if (response.status === 200) {

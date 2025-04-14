@@ -52,7 +52,7 @@ class SolanaWalletTelegramBot {
     }
     handleServerError(msg, error) {
         return __awaiter(this, void 0, void 0, function* () {
-            const errorMessage = error.error || 'Unknown Error';
+            const errorMessage = error.error || ' Error. Check credentials and Please Try Again';
             const details = error.details || '';
             const finalError = errorMessage === "Account not found"
                 ? "You have 0 SOL in your account. Please deposit some SOL to continue."
@@ -92,7 +92,7 @@ class SolanaWalletTelegramBot {
                 "🎁 /requestairdrop - Request an airdrop of SOL to your wallet\n" +
                 "📜 /getTransactions - View your recent transactions\n" +
                 "🌐 /switchnetwork - Switch between Solana networks\n\n" +
-                "Switch to Devnet using /switchnetwork to test out the bot\n\n" +
+                "Switch to Devnet after Signup using /switchnetwork to test out the bot\n\n" +
                 "🔄 Use /help anytime to view this message again!");
         });
     }
@@ -123,7 +123,7 @@ class SolanaWalletTelegramBot {
             try {
                 const signupPayload = Object.assign(Object.assign({}, this.extractTelegramUserInfo(msg)), { name: msg.text, password: state.password, API_TOKEN });
                 console.log(signupPayload);
-                const response = yield axios_1.default.post(`http://${this.serverUrl}/api/signup`, signupPayload);
+                const response = yield axios_1.default.post(`https://${this.serverUrl}/api/signup`, signupPayload);
                 if (response.status === 201) {
                     yield this.bot.sendMessage(msg.chat.id, "🎉 Wallet created successfully!\n\n" +
                         "🔑 Your wallet details have been generated securely.\n\n" +
@@ -168,7 +168,7 @@ class SolanaWalletTelegramBot {
                 API_TOKEN,
             };
             try {
-                const response = yield axios_1.default.post(`http://${this.serverUrl}/api/balance`, payload);
+                const response = yield axios_1.default.post(`https://${this.serverUrl}/api/balance`, payload);
                 if (response.status === 200) {
                     // Assuming balance is returned in lamports (1 SOL = 1_000_000_000 lamports)
                     console.log(response.data);
@@ -236,7 +236,7 @@ class SolanaWalletTelegramBot {
                 API_TOKEN,
             };
             try {
-                const response = yield axios_1.default.post(`http://${this.serverUrl}/api/airdrop`, payload);
+                const response = yield axios_1.default.post(`https://${this.serverUrl}/api/airdrop`, payload);
                 if (response.status === 200) {
                     yield this.bot.sendMessage(msg.chat.id, `✅ Airdrop of ${state.airdropAmount} SOL successful!`);
                 }
@@ -280,7 +280,7 @@ class SolanaWalletTelegramBot {
                 API_TOKEN,
             };
             try {
-                const response = yield axios_1.default.post(`http://${this.serverUrl}/api/transactions`, payload);
+                const response = yield axios_1.default.post(`https://${this.serverUrl}/api/transactions`, payload);
                 if (response.status === 200) {
                     const transactions = response.data.transactions;
                     if (transactions.length === 0) {
@@ -363,7 +363,7 @@ class SolanaWalletTelegramBot {
                 return;
             const payload = Object.assign({ telegramId: msg.from.id.toString(), password: msg.text, network: state.network, API_TOKEN }, (state.rpcUrl ? { rpcUrl: state.rpcUrl } : {}));
             try {
-                const response = yield axios_1.default.post(`http://${this.serverUrl}/api/network/switch`, payload);
+                const response = yield axios_1.default.post(`https://${this.serverUrl}/api/network/switch`, payload);
                 if (response.status === 200) {
                     yield this.bot.sendMessage(msg.chat.id, `✅ Switched to ${state.network} network successfully!`);
                 }
@@ -434,7 +434,7 @@ class SolanaWalletTelegramBot {
                 API_TOKEN,
             };
             try {
-                const response = yield axios_1.default.post(`http://${this.serverUrl}/api/transfer`, payload);
+                const response = yield axios_1.default.post(`https://${this.serverUrl}/api/transfer`, payload);
                 if (response.status === 200) {
                     yield this.bot.sendMessage(msg.chat.id, `✅ Transfer successful!\nTransaction Signature: ${response.data.signature}`);
                 }

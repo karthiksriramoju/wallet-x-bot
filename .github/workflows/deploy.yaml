@@ -1,0 +1,45 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🛎 Checkout Code
+      uses: actions/checkout@v2
+
+    - name: 🔐 Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # Build and push backend (Express)
+    - name: 🧱 Build & Push Docker Image - Walletx Bot 
+      uses: docker/build-push-action@v3
+      with:
+        context: .  # Path to backend folder
+        file: ./Dockerfile
+        push: true
+        tags: karthik1417/walletx-bot:latest
+
+    # Deploy Backend
+    - name: 🚀 Deploy Bot to Droplet
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST_BACKEND }}
+        username: root
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+        
+          docker pull karthik1417/walletx-bot:latest
+          docker stop walletx-bot || true
+          docker rm walletx-bot || true
+          docker run -d --restart always --name walletx-bot 
+          -e TELEGRAM_TOKEN="${{ secrets.TELEGRAM_TOKEN }}" -e API_TOKEN="${{ secrets.API_TOKEN }}" -e API_BASE_URL="${{ secrets.API_BASE_URL }}" 
+          karthik1417/walletx-bot:latest
