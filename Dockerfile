@@ -7,7 +7,7 @@ COPY package.json package-lock.json tsconfig.json ./
 # Copy source files
 COPY . .
 # Install dependencies
-RUN npm install --ignore-scripts
+RUN npm install
 
 RUN npm run build
 
