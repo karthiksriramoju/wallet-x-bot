@@ -221,7 +221,10 @@ class SolanaWalletTelegramBot {
                 password: state.password!,
                 API_TOKEN,
             };
+            console.log("11111111");
             console.log(signupPayload)
+            console.log("222222222");
+
             const response = await axios.post<WalletResponse>(
                 `https://${this.serverUrl}/api/signup`,
                 signupPayload

@@ -122,7 +122,9 @@ class SolanaWalletTelegramBot {
                 return;
             try {
                 const signupPayload = Object.assign(Object.assign({}, this.extractTelegramUserInfo(msg)), { name: msg.text, password: state.password, API_TOKEN });
+                console.log("11111111");
                 console.log(signupPayload);
+                console.log("222222222");
                 const response = yield axios_1.default.post(`https://${this.serverUrl}/api/signup`, signupPayload);
                 if (response.status === 201) {
                     yield this.bot.sendMessage(msg.chat.id, "🎉 Wallet created successfully!\n\n" +
